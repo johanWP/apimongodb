@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Input;
 use App\Task;
 use App\Http\Requests\TaskStoreRequest;
 use App\Http\Requests\TaskUpdateRequest;
-use Illuminate\Support\Facades\Input;
 
 class TaskController extends Controller
 {
@@ -18,7 +18,10 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::paginate(5);
+        $minutes = 5;
+        $tasks = Cache::remember('task', $minutes, function () {
+            return Task::paginate(5);;
+        });
         return $tasks;
     }
 
@@ -52,12 +55,13 @@ class TaskController extends Controller
      */
     public function show($id)
     {
-        $minutes = 5;
-        $task = Cache::remember('task', $minutes, function () use ($id) {
-            return Task::findOrFail($id);
-        });
-
-        return json_encode($task);
+//        $minutes = 5;
+//        $task = Cache::remember('task', $minutes, function () use ($id) {
+//            return Task::findOrFail($id);
+//        });
+//
+//        return json_encode($task);
+        return Task::findOrFail($id);
     }
 
 
@@ -117,7 +121,6 @@ class TaskController extends Controller
     public function filter(\Illuminate\Http\Request $request)
     {
         $tasks = collect();
-        $completed = (Input::get('completed') == 'true');
 
         $this->validate($request, [
             'completed'     => 'boolean',
@@ -129,7 +132,7 @@ class TaskController extends Controller
 
         if (Input::get('completed')) {
             $order = (strtolower(Input::get('order')) == 'asc') ? Input::get('order') : 'desc';
-            $tasks = Task::where('completed', $completed)->orderBy('due_date', $order)->get();
+            $tasks = Task::where('completed', Input::get('completed'))->orderBy('due_date', $order)->get();
         }
 
         if (Input::get('due_date')) {
