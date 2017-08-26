@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Cache;
 use App\Task;
 use App\Http\Requests\TaskStoreRequest;
 use App\Http\Requests\TaskUpdateRequest;
+use Illuminate\Support\Facades\Input;
 
 class TaskController extends Controller
 {
@@ -50,7 +52,11 @@ class TaskController extends Controller
      */
     public function show($id)
     {
-        $task = Task::findOrFail($id);
+        $minutes = 5;
+        $task = Cache::remember('task', $minutes, function () use ($id) {
+            return Task::findOrFail($id);
+        });
+
         return json_encode($task);
     }
 
@@ -106,5 +112,48 @@ class TaskController extends Controller
         }
 
         return response($responseMsg, $responseCode);
+    }
+
+    public function filter(\Illuminate\Http\Request $request)
+    {
+        $tasks = collect();
+        $completed = (Input::get('completed') == 'true');
+
+        $this->validate($request, [
+            'completed'     => 'boolean',
+            'due_date'      => 'date',
+            'created_at'    => 'date',
+            'updated_at'    => 'date',
+        ]);
+
+
+        if (Input::get('completed')) {
+            $order = (strtolower(Input::get('order')) == 'asc') ? Input::get('order') : 'desc';
+            $tasks = Task::where('completed', $completed)->orderBy('due_date', $order)->get();
+        }
+
+        if (Input::get('due_date')) {
+            $tasks = $this->filterByDateField('due_date');
+        }
+
+        if (Input::get('created_at')) {
+            $tasks = $this->filterByDateField('created_at');
+        }
+
+        if (Input::get('updated_at')) {
+            $tasks = $this->filterByDateField('updated_at');
+        }
+        return $tasks;
+    }
+
+    private function filterByDateField($dateFieldName)
+    {
+        $value = Input::get($dateFieldName);
+        $sort = (strtolower(Input::get('order')) == 'asc') ? 'asc' : 'desc';
+        $operator = (strtolower(Input::get('order')) == 'asc') ? '>' : '<';
+        $d = new \DateTime($value);
+        $tasks = Task::where($dateFieldName, $operator, $d)->orderBy($dateFieldName, $sort)->get();
+
+        return $tasks;
     }
 }
