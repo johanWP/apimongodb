@@ -36,15 +36,19 @@ class TaskController extends Controller
     {
 
         $task = new Task;
-        if ($task->create($request->all())) {
+        $task->title = $request->title;
+        $task->description = $request->description;
+        $task->completed = $request->completed;
+        $task->due_date = $request->due_date;
+
+        if ($task->save()) {
             $responseMsg = "OK";
             $responseCode = 200;
         } else {
             $responseMsg = "something went wrong";
             $responseCode = 400;
         }
-
-        return response($responseMsg, $responseCode);
+        return response(json_encode(["result" => $responseMsg, "id" => $task->id]), $responseCode);
     }
 
     /**
@@ -89,7 +93,7 @@ class TaskController extends Controller
         catch (\Exception $e) {
             $responseMsg = $e->getMessage();
         }
-        return response($responseMsg, $responseCode);
+        return response(json_encode(["result" => $responseMsg]), $responseCode);
     }
 
     /**
@@ -115,7 +119,7 @@ class TaskController extends Controller
             $responseMsg = $e->getMessage();
         }
 
-        return response($responseMsg, $responseCode);
+        return response(json_encode(["result" => $responseMsg]), $responseCode);
     }
 
     public function filter(\Illuminate\Http\Request $request)
