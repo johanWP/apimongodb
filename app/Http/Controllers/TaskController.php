@@ -124,8 +124,6 @@ class TaskController extends Controller
 
     public function filter(\Illuminate\Http\Request $request)
     {
-        $tasks = collect();
-
         $this->validate($request, [
             'completed'     => 'boolean',
             'due_date'      => 'date',
@@ -133,34 +131,18 @@ class TaskController extends Controller
             'updated_at'    => 'date',
         ]);
 
+        $completed = Input::get('completed');
+        $dueDate = Input::get('due_date');
+        $createdAt = Input::get('created_at');
+        $updatedAt = Input::get('updated_at');
 
-        if (Input::get('completed')) {
-            $order = (strtolower(Input::get('order')) == 'asc') ? Input::get('order') : 'desc';
-            $tasks = Task::where('completed', Input::get('completed'))->orderBy('due_date', $order)->get();
-        }
-
-        if (Input::get('due_date')) {
-            $tasks = $this->filterByDateField('due_date');
-        }
-
-        if (Input::get('created_at')) {
-            $tasks = $this->filterByDateField('created_at');
-        }
-
-        if (Input::get('updated_at')) {
-            $tasks = $this->filterByDateField('updated_at');
-        }
-        return $tasks;
-    }
-
-    private function filterByDateField($dateFieldName)
-    {
-        $value = Input::get($dateFieldName);
-        $sort = (strtolower(Input::get('order')) == 'asc') ? 'asc' : 'desc';
-        $operator = (strtolower(Input::get('order')) == 'asc') ? '>' : '<';
-        $d = new \DateTime($value);
-        $tasks = Task::where($dateFieldName, $operator, $d)->orderBy($dateFieldName, $sort)->get();
-
-        return $tasks;
+        return json_encode(
+            Task::filterCompleted($completed)->
+                filterByDateField('due_date', $dueDate)->
+                filterByDateField('created_at', $createdAt)->
+                filterByDateField('updated_at', $updatedAt)->
+                orderBy('due_date')->
+                paginate(5)
+        );
     }
 }
