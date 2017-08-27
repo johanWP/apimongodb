@@ -2,6 +2,7 @@
 
 
 ## Task API w/MongoDB
+This project works as a demo for a To-Do list app, with basic CRUD and filter functionality.
 
 ### Installation
 
@@ -15,7 +16,6 @@ to your project folder, and run `php artisan db:seed` to create 50 tasks.
 ## Using the API
 
 ### HTTP Verbs
-This project works as a demo for a To-Do list app, with basic CRUD and filter functionality.
 
 | HTTP METHOD | POST            | GET       | PUT         | DELETE |
 | ----------- | --------------- | --------- | ----------- | ------ |
